@@ -1,0 +1,8 @@
+streamlit
+mysql-connector-python
+streamlit-authenticator
+pandas
+numpy
+Pillow
+joblib
+scikit-learn
