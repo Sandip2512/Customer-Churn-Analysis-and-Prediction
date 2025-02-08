@@ -35,6 +35,34 @@ def main():
         else:
             st.error("Model file not found. Please ensure the model path is correct.")
 
+    # Provide option to train and save the model if missing
+    if model is None:
+        st.warning("No model found. Please train a new model.")
+        if st.button("Train Model"):
+            from sklearn.ensemble import RandomForestClassifier
+            from sklearn.model_selection import train_test_split
+            from sklearn.metrics import accuracy_score
+            # Example data for demonstration
+            df = pd.DataFrame({
+                'SeniorCitizen': [0, 1, 0, 1],
+                'tenure': [10, 5, 20, 30],
+                'MonthlyCharges': [70, 80, 60, 90],
+                'TotalCharges': [700, 400, 1200, 2700],
+                'target': [1, 0, 0, 1]
+            })
+            X = df.drop('target', axis=1)
+            y = df['target']
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            model = RandomForestClassifier()
+            model.fit(X_train, y_train)
+            accuracy = accuracy_score(y_test, model.predict(X_test))
+            st.success(f"Model trained with accuracy: {accuracy * 100:.2f}%")
+            # Save the trained model
+            os.makedirs(os.path.join(current_dir, 'notebook'), exist_ok=True)
+            model_save_path = os.path.join(current_dir, 'notebook', 'model.sav')
+            joblib.dump(model, model_save_path)
+            st.success(f"Model saved successfully at {model_save_path}")
+
     # Application sidebar
     add_selectbox = st.sidebar.selectbox(
         "How would you like to predict?", ("Online", "Batch")
