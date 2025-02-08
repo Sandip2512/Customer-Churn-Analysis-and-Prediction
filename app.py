@@ -7,12 +7,8 @@ import os
 from user_management import authenticate, add_user
 from preprocessing import preprocess
 
-# Global model variable
-model = None
-
 # Define main application
 def main():
-    global model
     st.title('Telco Customer Churn Prediction App')
 
     # Get the directory of the current script
@@ -24,141 +20,119 @@ def main():
         image = Image.open(image_path)
         st.image(image, caption='App Image')
     else:
-        st.info("App Image not found.")
+        st.error(f"Image file not found at {image_path}")
 
-    # Load the model if not already loaded
+    # Load the model
     model_path = os.path.join(current_dir, 'notebook', 'model.sav')
-    if model is None:
-        if os.path.exists(model_path):
-            model = joblib.load(model_path)
-            st.write("Model loaded successfully!")
-        else:
-            st.error("Model file not found. Please ensure the model path is correct.")
+    if os.path.exists(model_path):
+        model = joblib.load(model_path)
+        st.write("Model loaded successfully!")
+    else:
+        st.error(f"Model file not found at {model_path}")
 
-    # Provide option to train and save the model if missing
-    if model is None:
-        st.warning("No model found. Please train a new model.")
-        if st.button("Train Model"):
-            from sklearn.ensemble import RandomForestClassifier
-            from sklearn.model_selection import train_test_split
-            from sklearn.metrics import accuracy_score
-            # Example data for demonstration
-            df = pd.DataFrame({
-                'SeniorCitizen': [0, 1, 0, 1],
-                'tenure': [10, 5, 20, 30],
-                'MonthlyCharges': [70, 80, 60, 90],
-                'TotalCharges': [700, 400, 1200, 2700],
-                'target': [1, 0, 0, 1]
-            })
-            X = df.drop('target', axis=1)
-            y = df['target']
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-            model = RandomForestClassifier()
-            model.fit(X_train, y_train)
-            accuracy = accuracy_score(y_test, model.predict(X_test))
-            st.success(f"Model trained with accuracy: {accuracy * 100:.2f}%")
-            # Save the trained model
-            os.makedirs(os.path.join(current_dir, 'notebook'), exist_ok=True)
-            model_save_path = os.path.join(current_dir, 'notebook', 'model.sav')
-            joblib.dump(model, model_save_path)
-            st.success(f"Model saved successfully at {model_save_path}")
+    # Setting Application title
+    st.title('Telco Customer Churn Prediction App')
 
-    # Application sidebar
+    # Setting Application description
+    st.markdown("""
+     :dart:  This Streamlit app is made to predict customer churn in a fictional telecommunication use case.
+    The application is functional for both online prediction and batch data prediction. \n
+    """)
+    st.markdown("<h3></h3>", unsafe_allow_html=True)
+
+    # Setting Application sidebar default
     add_selectbox = st.sidebar.selectbox(
         "How would you like to predict?", ("Online", "Batch")
     )
-    st.sidebar.info('This app predicts Customer Churn.')
-    if os.path.exists(image_path):
-        st.sidebar.image(image)
+    st.sidebar.info('This app is created to predict Customer Churn')
+    st.sidebar.image(image)
 
     if add_selectbox == "Online":
         st.info("Input data below")
-
-        # Demographic Data Input
-        st.subheader("Demographic Data")
+        # Based on our optimal features selection
+        st.subheader("Demographic data")
         seniorcitizen = st.selectbox('Senior Citizen:', ('Yes', 'No'))
         dependents = st.selectbox('Dependent:', ('Yes', 'No'))
 
-        # Payment Data Input
-        st.subheader("Payment Data")
-        tenure = st.slider('Number of months the customer has stayed with the company', min_value=0, max_value=72, value=1)
+        st.subheader("Payment data")
+        tenure = st.slider('Number of months the customer has stayed with the company', min_value=0, max_value=72, value=0)
         contract = st.selectbox('Contract', ('Month-to-month', 'One year', 'Two year'))
         paperlessbilling = st.selectbox('Paperless Billing', ('Yes', 'No'))
-        payment_method = st.selectbox('Payment Method',
-                                       ('Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'))
-        monthlycharges = st.number_input('Monthly Charges', min_value=0.0, max_value=150.0, value=50.0)
-        totalcharges = st.number_input('Total Charges', min_value=0.0, max_value=10000.0, value=500.0)
+        PaymentMethod = st.selectbox('PaymentMethod',('Electronic check', 'Mailed check', 'Bank transfer (automatic)','Credit card (automatic)'))
+        monthlycharges = st.number_input('The amount charged to the customer monthly', min_value=0, max_value=150, value=0)
+        totalcharges = st.number_input('The total amount charged to the customer',min_value=0, max_value=10000, value=0)
 
-        # Services Data Input
-        st.subheader("Services Signed Up For")
-        mutliplelines = st.selectbox("Multiple Lines", ('Yes', 'No', 'No phone service'))
+        st.subheader("Services signed up for")
+        mutliplelines = st.selectbox("Does the customer have multiple lines",('Yes','No','No phone service'))
         phoneservice = st.selectbox('Phone Service:', ('Yes', 'No'))
-        internetservice = st.selectbox("Internet Service", ('DSL', 'Fiber optic', 'No'))
-        onlinesecurity = st.selectbox("Online Security", ('Yes', 'No', 'No internet service'))
-        onlinebackup = st.selectbox("Online Backup", ('Yes', 'No', 'No internet service'))
-        techsupport = st.selectbox("Technology Support", ('Yes', 'No', 'No internet service'))
-        streamingtv = st.selectbox("Streaming TV", ('Yes', 'No', 'No internet service'))
-        streamingmovies = st.selectbox("Streaming Movies", ('Yes', 'No', 'No internet service'))
+        internetservice = st.selectbox("Does the customer have internet service", ('DSL', 'Fiber optic', 'No'))
+        onlinesecurity = st.selectbox("Does the customer have online security",('Yes','No','No internet service'))
+        onlinebackup = st.selectbox("Does the customer have online backup",('Yes','No','No internet service'))
+        techsupport = st.selectbox("Does the customer have technology support", ('Yes','No','No internet service'))
+        streamingtv = st.selectbox("Does the customer stream TV", ('Yes','No','No internet service'))
+        streamingmovies = st.selectbox("Does the customer stream movies", ('Yes','No','No internet service'))
 
-        # Organize user inputs into a dictionary
         data = {
-            'SeniorCitizen': seniorcitizen,
-            'Dependents': dependents,
-            'tenure': tenure,
-            'PhoneService': phoneservice,
-            'MultipleLines': mutliplelines,
-            'InternetService': internetservice,
-            'OnlineSecurity': onlinesecurity,
-            'OnlineBackup': onlinebackup,
-            'TechSupport': techsupport,
-            'StreamingTV': streamingtv,
-            'StreamingMovies': streamingmovies,
-            'Contract': contract,
-            'PaperlessBilling': paperlessbilling,
-            'PaymentMethod': payment_method,
-            'MonthlyCharges': monthlycharges,
-            'TotalCharges': totalcharges
-        }
-        features_df = pd.DataFrame([data])
-        st.write('Overview of input data:')
+                'SeniorCitizen': seniorcitizen,
+                'Dependents': dependents,
+                'tenure': tenure,
+                'PhoneService': phoneservice,
+                'MultipleLines': mutliplelines,
+                'InternetService': internetservice,
+                'OnlineSecurity': onlinesecurity,
+                'OnlineBackup': onlinebackup,
+                'TechSupport': techsupport,
+                'StreamingTV': streamingtv,
+                'StreamingMovies': streamingmovies,
+                'Contract': contract,
+                'PaperlessBilling': paperlessbilling,
+                'PaymentMethod': PaymentMethod, 
+                'MonthlyCharges': monthlycharges, 
+                'TotalCharges': totalcharges
+                }
+        features_df = pd.DataFrame.from_dict([data])
+        st.markdown("<h3></h3>", unsafe_allow_html=True)
+        st.write('Overview of input is shown below')
+        st.markdown("<h3></h3>", unsafe_allow_html=True)
         st.dataframe(features_df)
 
-        # Preprocess and Predict
+        # Preprocess inputs
         preprocess_df = preprocess(features_df, 'Online')
-        try:
-            prediction = model.predict(preprocess_df)
-            prediction_proba = model.predict_proba(preprocess_df)[0][1]
 
-            if st.button('Predict'):
-                if prediction == 1:
-                    st.warning(f'Yes, the customer will terminate the service. Probability: {prediction_proba:.2f}')
-                else:
-                    st.success(f'No, the customer is happy with Telco Services. Probability: {1 - prediction_proba:.2f}')
-        except Exception as e:
-            st.error(f"Prediction failed: {e}")
+        prediction = model.predict(preprocess_df)
+        prediction_proba = model.predict_proba(preprocess_df)[0][1]  # Get the probability of the positive class
 
+        if st.button('Predict'):
+            if prediction == 1:
+                st.warning(f'Yes, the customer will terminate the service. Probability: {prediction_proba:.2f}')
+            else:
+                st.success(f'No, the customer is happy with Telco Services. Probability: {1 - prediction_proba:.2f}')
     else:
-        st.subheader("Dataset Upload")
-        uploaded_file = st.file_uploader("Choose a CSV file")
+        st.subheader("Dataset upload")
+        uploaded_file = st.file_uploader("Choose a file")
         if uploaded_file is not None:
-            try:
-                data = pd.read_csv(uploaded_file)
-                st.write(data.head())
-                preprocess_df = preprocess(data, "Batch")
-                if st.button('Predict'):
-                    prediction = model.predict(preprocess_df)
-                    prediction_proba = model.predict_proba(preprocess_df)[:, 1]
-                    prediction_df = pd.DataFrame({
-                        "Predictions": prediction,
-                        "Probability": prediction_proba
-                    })
-                    prediction_df["Predictions"] = prediction_df["Predictions"].replace({1: 'Customer will churn', 0: 'Customer is happy'})
-                    st.subheader('Prediction Results')
-                    st.write(prediction_df)
-            except Exception as e:
-                st.error(f"Error processing the file: {e}")
+            data = pd.read_csv(uploaded_file)
+            # Get overview of data
+            st.write(data.head())
+            st.markdown("<h3></h3>", unsafe_allow_html=True)
+            # Preprocess inputs
+            preprocess_df = preprocess(data, "Batch")
+            if st.button('Predict'):
+                # Get batch prediction
+                prediction = model.predict(preprocess_df)
+                prediction_proba = model.predict_proba(preprocess_df)[:, 1]  # Get probabilities of the positive class
+                prediction_df = pd.DataFrame({
+                    "Predictions": prediction,
+                    "Probability": prediction_proba
+                })
+                prediction_df["Predictions"] = prediction_df["Predictions"].replace({1: 'Yes, the customer will terminate the service.', 
+                                                                                    0: 'No, the customer is happy with Telco Services.'})
 
-# Registration Functionality
+                st.markdown("<h3></h3>", unsafe_allow_html=True)
+                st.subheader('Prediction')
+                st.write(prediction_df)
+
+# Registration
 def register():
     st.title("User Registration")
     new_username = st.text_input("Enter a username")
@@ -166,6 +140,7 @@ def register():
 
     if st.button("Register"):
         if new_username and new_password:
+            # Add the user
             success = add_user(new_username, new_password)
             if success:
                 st.success("You have successfully registered!")
@@ -175,11 +150,11 @@ def register():
                 st.warning("Username already exists. Please choose a different one.")
         else:
             st.warning("Please fill out all fields.")
-
+    
     if st.button("Back to Login"):
         st.session_state['is_registering'] = False
 
-# Login Functionality
+# Login
 def login():
     st.title("Login")
     username = st.text_input("Username")
